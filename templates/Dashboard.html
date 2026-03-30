@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — SecureReg</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+
+    /* ══════════════════════════════════════
+       NAVBAR
+    ══════════════════════════════════════ */
+    nav {
+      background: #0c2340;
+      padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .nav-brand:hover { opacity: 0.85; }
+    .nav-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.13);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .nav-icon svg { width: 16px; height: 16px; fill: white; }
+    .nav-title { color: white; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      color: rgba(255,255,255,0.72); text-decoration: none; font-size: 13px;
+      padding: 6px 12px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover  { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: rgba(255,255,255,0.16); color: white; font-weight: 600; }
+
+    .logout-btn {
+      color: rgba(255,255,255,0.72); background: none;
+      border: 1px solid rgba(255,255,255,0.22);
+      font-size: 13px; padding: 6px 14px; border-radius: 6px;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.4); }
+    .logout-btn svg { width: 13px; height: 13px; fill: currentColor; }
+
+    /* ══════════════════════════════════════
+       PAGE LAYOUT
+    ══════════════════════════════════════ */
+    .page {
+      max-width: 920px; margin: 0 auto;
+      padding: 2rem 1.5rem;
+      animation: fadeUp 0.35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════════════
+       WELCOME BANNER
+    ══════════════════════════════════════ */
+    .welcome-banner {
+      background: linear-gradient(135deg, #0c2340 0%, #1e4976 100%);
+      border-radius: 16px;
+      padding: 2rem 2.25rem;
+      margin-bottom: 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem;
+      box-shadow: 0 4px 20px rgba(12,35,64,0.22);
+      position: relative; overflow: hidden;
+    }
+    /* Subtle decorative circle */
+    .welcome-banner::after {
+      content: "";
+      position: absolute; right: -40px; top: -40px;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      pointer-events: none;
+    }
+    .welcome-text h1 {
+      color: white; font-size: 23px; font-weight: 700;
+      margin-bottom: 6px; line-height: 1.25;
+    }
+    .welcome-text p { color: rgba(255,255,255,0.62); font-size: 13.5px; }
+    .welcome-avatar {
+      width: 58px; height: 58px; border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 23px; font-weight: 800; color: white;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.25);
+    }
+
+    /* ══════════════════════════════════════
+       STAT CARDS
+    ══════════════════════════════════════ */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: white; border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 1.2rem 1.4rem;
+      transition: box-shadow 0.2s, transform 0.2s;
+      cursor: default;
+    }
+    .stat-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .stat-label {
+      font-size: 10.5px; font-weight: 700; color: #718096;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 8px;
+    }
+    .stat-value { font-size: 26px; font-weight: 800; color: #1a202c; line-height: 1; }
+    .stat-sub   { font-size: 11.5px; color: #a0aec0; margin-top: 5px; }
+
+    /* ══════════════════════════════════════
+       INFO CARDS GRID
+    ══════════════════════════════════════ */
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 620px) { .cards { grid-template-columns: 1fr; } }
+
+    .card {
+      background: white; border-radius: 14px;
+      border: 1px solid #e2e8f0; padding: 1.5rem;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+
+    .card-title {
+      font-size: 13.5px; font-weight: 700; color: #1a202c;
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .card-icon svg { width: 15px; height: 15px; }
+    .icon-blue  { background: #ebf4ff; } .icon-blue  svg { fill: #3182ce; }
+    .icon-green { background: #f0fff4; } .icon-green svg { fill: #38a169; }
+
+    /* ── Info rows ── */
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 0; border-bottom: 1px solid #f7fafc; font-size: 13px;
+    }
+    .info-row:last-of-type { border-bottom: none; }
+    .info-key { color: #718096; }
+    .info-val { color: #1a202c; font-weight: 600; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11.5px; font-weight: 700;
+    }
+    .badge-green { background: #f0fff4; color: #276749; }
+    .badge-green::before {
+      content: ""; width: 6px; height: 6px; border-radius: 50%;
+      background: #38a169; display: inline-block;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ── Security checklist ── */
+    .security-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 9px 0; border-bottom: 1px solid #f7fafc;
+    }
+    .security-item:last-child { border-bottom: none; }
+    .check-icon {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #f0fff4;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .check-icon svg { width: 11px; height: 11px; fill: #38a169; }
+    .security-label { font-size: 13px; color: #1a202c; font-weight: 600; }
+    .security-desc  { font-size: 11.5px; color: #a0aec0; margin-top: 2px; }
+
+    /* ── Action button ── */
+    .action-btn {
+      display: inline-block; margin-top: 1rem;
+      padding: 9px 18px;
+      background: #0c2340; color: white;
+      border-radius: 8px; text-decoration: none;
+      font-size: 13px; font-weight: 700;
+      transition: background 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.01em;
+    }
+    .action-btn:hover {
+      background: #1a3a5c;
+      box-shadow: 0 3px 10px rgba(12,35,64,0.25);
+    }
+
+    /* ── Logout confirm overlay ── */
+     .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .confirm-box {
+      background: white; border-radius: 14px;
+      padding: 2rem; max-width: 360px; width: 90%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      text-align: center;
+      animation: scaleIn 0.2s ease;
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .confirm-box h3 { font-size: 17px; font-weight: 700; color: #1a202c; margin-bottom: 8px; }
+    .confirm-box p  { font-size: 13px; color: #718096; margin-bottom: 1.5rem; }
+    .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-cancel {
+      padding: 9px 20px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+      background: white; color: #4a5568; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: #f7fafc; }
+    .btn-confirm-red {
+      padding: 9px 20px; border-radius: 8px; border: none;
+      background: #c53030; color: white; font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    .btn-confirm-red:hover { background: #9b2c2c; }
+
+    /* ══════════════════════════════════════
+       DARK MODE STYLES (GLOBAL)
+    ══════════════════════════════════════ */
+    body.dark-mode {
+      background: #1a202c;
+      color: #e2e8f0;
+    }
+    body.dark-mode nav {
+      background: #0f1621;
+    }
+    body.dark-mode .page {
+      background: #1a202c;
+    }
+    body.dark-mode .welcome-banner {
+      background: linear-gradient(135deg, #0f1621 0%, #1e3a5f 100%);
+    }
+    body.dark-mode .welcome-text h1 {
+      color: #e2e8f0;
+    }
+    body.dark-mode .welcome-text p {
+      color: rgba(226, 232, 240, 0.62);
+    }
+    body.dark-mode .stat-card {
+      background: #2d3748;
+      border-color: #4a5568;
+    }
+    body.dark-mode .stat-label {
+      color: #a0aec0;
+    }
+    body.dark-mode .stat-value {
+      color: #e2e8f0;
+    }
+    body.dark-mode .confirm-box {
+      background: #2d3748;
+    }
+    body.dark-mode .confirm-box h3 {
+      color: #e2e8f0;
+    }
+    body.dark-mode .confirm-box p {
+      color: #a0aec0;
+    }
+    body.dark-mode .btn-cancel {
+      background: #4a5568;
+      color: #e2e8f0;
+      border-color: #718096;
+    }
+    body.dark-mode .btn-cancel:hover {
+      background: #718096;
+    }
+
+    /* Role Badge Styles */
+    .role-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 10px;
+    }
+    .role-badge.admin {
+      background: rgba(239, 68, 68, 0.2);
+      color: #dc2626;
+    }
+    .role-badge.engineer {
+      background: rgba(59, 130, 246, 0.2);
+      color: #2563eb;
+    }
+    .role-badge.staff {
+      background: rgba(34, 197, 94, 0.2);
+      color: #16a34a;
+    }
+    body.dark-mode .role-badge.admin {
+      background: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+    body.dark-mode .role-badge.engineer {
+      background: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+    body.dark-mode .role-badge.staff {
+      background: rgba(34, 197, 94, 0.3);
+      color: #86efac;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Logout confirm overlay -->
+
+
+<div class="overlay" id="logoutOverlay">
+  <div class="confirm-box">
+    <h3>Sign out?</h3>
+    <p>Your session will be cleared and you'll return to the login page.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeLogout()">Cancel</button>
+      <button class="btn-confirm-red" onclick="confirmLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openLogout() {
+  document.getElementById("logoutOverlay").style.display = "flex";
+}
+
+function closeLogout() {
+  document.getElementById("logoutOverlay").style.display = "none";
+}
+
+function confirmLogout() {
+  window.location.href = '/logout';
+}
+</script>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-brand" href="/dashboard">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1z"/>
+      </svg>
+    </div>
+    <span class="nav-title">SecureReg</span>
+  </a>
+
+  <div class="nav-links">
+    <a class="nav-link active" href="/dashboard">Dashboard</a>
+    <a class="nav-link" href="/activity">Activity</a>
+    <a class="nav-link" href="/users">Users</a>
+    <a class="nav-link" href="/settings">Settings</a>
+    <button class="logout-btn" type="button" onclick="openLogout()">
+      <svg viewBox="0 0 24 24">
+        <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+      </svg>
+      Sign out
+    </button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Welcome banner -->
+  <div class="welcome-banner">
+    <div class="welcome-text">
+      <h1>Welcome back, {{ user.username }}!</h1>
+      <p>You are securely signed in. Account created on {{ user.created_at }}.</p>
+    </div>
+    <div class="welcome-avatar" id="avatarEl">{{ user.username[0].upper() }}</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Account status</div>
+      <div class="stat-value" style="color:#38a169; font-size:17px; padding-top:3px;">Active</div>
+      <div class="stat-sub">Verified &amp; secure</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Last login</div>
+      <div class="stat-value" style="font-size:14px; padding-top:5px;">{{ user.last_login or "First login" }}</div>
+      <div class="stat-sub">Previous session</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Registered users</div>
+      <div class="stat-value">{{ total_users }}</div>
+      <div class="stat-sub">On this system</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Password hashing</div>
+      <div class="stat-value" style="font-size:15px; padding-top:4px;">bcrypt</div>
+      <div class="stat-sub">Work factor: 12</div>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards">
+
+    <!-- Account info -->
+    <div class="card">
+      <div class="card-title">
+        <div class="card-icon icon-blue">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        </div>
+        Account information
+      </div>
+      <div class="info-row">
+        <span class="info-key">Username</span>
+        <span class="info-val">{{ user.username }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Created</span>
+        <span class="info-val">{{ user.created_at }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Last login</span>
+        <span class="info-val">{{ user.last_login or "—" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">Status</span>
+        <span class="info-val"><span class="badge badge-green">Active</span></span>
+      </div>
+      <a class="action-btn" href="/profile">Manage profile</a>
+    </div>
+
+    <!-- Security features -->
+    <div class="card">
+      <div class="card-title">
+        <div class="card-icon icon-green">
+          <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1z"/></svg>
+        </div>
+        Security features active
+      </div>
+      <div class="security-item">
+        <div class="check-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <div>
+          <div class="security-label">bcrypt password hashing</div>
+          <div class="security-desc">Work factor 12 — brute force resistant</div>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="check-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <div>
+          <div class="security-label">Password strength enforcement</div>
+          <div class="security-desc">5 rules + common password blocklist</div>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="check-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <div>
+          <div class="security-label">CAPTCHA verification</div>
+          <div class="security-desc">Math-based bot prevention at registration</div>
+        </div>
+      </div>
+      <div class="security-item">
+        <div class="check-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </div>
+        <div>
+          <div class="security-label">Server-side session management</div>
+          <div class="security-desc">Flask secure session with secret key</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  /* ── Global Dark Mode Management ── */
+  document.addEventListener("DOMContentLoaded", function() {
+    // Load user info and apply dark mode if needed
+    fetch('/api/user')
+      .then(res => res.json())
+      .then(data => {
+        if (data.dark_mode) {
+          document.body.classList.add('dark-mode');
+        }
+        // Display role badge if user has a role
+        const userRole = data.role || 'staff';
+        const welcomeText = document.querySelector('.welcome-text h1');
+        if (welcomeText) {
+          const badge = document.createElement('span');
+          badge.className = 'role-badge ' + userRole;
+          badge.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+          welcomeText.appendChild(badge);
+        }
+      })
+      .catch(err => console.error('Error loading user info:', err));
+  });
+
+  /* ── Logout confirm dialog ── */
+  function openLogout() {
+    document.getElementById("logoutOverlay").classList.add("show");
+  }
+  function closeLogout() {
+    document.getElementById("logoutOverlay").classList.remove("show");
+  }
+  function confirmLogout() {
+    window.location.href = "/logout";
+  }
+
+  /* Close overlay on backdrop click */
+  document.getElementById("logoutOverlay").addEventListener("click", function(e) {
+    if (e.target === this) closeLogout();
+  });
+
+  /* Close overlay on Escape key */
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") closeLogout();
+  });
+
+  /* ── Animate stat values counting up ── */
+  function animateCount(el, target, duration) {
+    if (isNaN(target)) return;
+    var start     = 0;
+    var startTime = null;
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      el.textContent = Math.floor(progress * target);
+      if (progress < 1) requestAnimationFrame(step);
+      else el.textContent = target;
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* Run count-up on all numeric stat values */
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".stat-value").forEach(function(el) {
+      var num = parseInt(el.textContent.trim(), 10);
+      if (!isNaN(num) && num > 1) animateCount(el, num, 800);
+    });
+  });
+</script>
+</body>
+</html>

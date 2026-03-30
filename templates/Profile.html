@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile — SecureReg</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+
+    /* ══════════════════════════════════════
+       NAVBAR
+    ══════════════════════════════════════ */
+    nav {
+      background: #0c2340;
+      padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; transition: opacity 0.15s;
+    }
+    .nav-brand:hover { opacity: 0.85; }
+    .nav-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.13);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .nav-icon svg { width: 16px; height: 16px; fill: white; }
+    .nav-title { color: white; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      color: rgba(255,255,255,0.72); text-decoration: none; font-size: 13px;
+      padding: 6px 12px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover  { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: rgba(255,255,255,0.16); color: white; font-weight: 600; }
+    .logout-btn {
+      color: rgba(255,255,255,0.72); background: none;
+      border: 1px solid rgba(255,255,255,0.22);
+      font-size: 13px; padding: 6px 14px; border-radius: 6px;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+    .logout-btn svg { width: 13px; height: 13px; fill: currentColor; }
+
+    /* ══════════════════════════════════════
+       PAGE LAYOUT
+    ══════════════════════════════════════ */
+    .page {
+      max-width: 720px; margin: 0 auto;
+      padding: 2rem 1.5rem;
+      animation: fadeUp 0.35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header { margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 22px; font-weight: 800; color: #1a202c; margin-bottom: 4px; }
+    .page-header p  { font-size: 13px; color: #718096; }
+
+    /* ══════════════════════════════════════
+       CARDS
+    ══════════════════════════════════════ */
+    .card {
+      background: white; border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      padding: 1.75rem; margin-bottom: 1.25rem;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.07); }
+
+    .card-title {
+      font-size: 14px; font-weight: 700; color: #1a202c;
+      margin-bottom: 1.25rem; padding-bottom: 1rem;
+      border-bottom: 1px solid #edf2f7;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .card-icon svg { width: 15px; height: 15px; }
+    .icon-blue   { background: #ebf4ff; } .icon-blue   svg { fill: #3182ce; }
+    .icon-orange { background: #fffaf0; } .icon-orange svg { fill: #dd6b20; }
+
+    /* ── Avatar block ── */
+    .avatar-block {
+      display: flex; align-items: center;
+      gap: 1.25rem; margin-bottom: 1.5rem;
+    }
+    .avatar {
+      width: 68px; height: 68px; border-radius: 50%;
+      background: linear-gradient(135deg, #0c2340, #1e4976);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 27px; font-weight: 800; color: white; flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(12,35,64,0.22);
+    }
+    .avatar-info h2 { font-size: 18px; font-weight: 700; color: #1a202c; }
+    .avatar-info p  { font-size: 13px; color: #718096; margin-top: 3px; }
+
+    /* ── Info rows ── */
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid #f7fafc; font-size: 13px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: #718096; }
+    .info-val { color: #1a202c; font-weight: 600; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11.5px; font-weight: 700;
+    }
+    .badge-green { background: #f0fff4; color: #276749; }
+    .badge-green::before {
+      content: ""; width: 6px; height: 6px; border-radius: 50%;
+      background: #38a169; display: inline-block;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+
+    /* ══════════════════════════════════════
+       CHANGE PASSWORD FORM
+    ══════════════════════════════════════ */
+    .field { margin-bottom: 1rem; }
+    label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: #4a5568; margin-bottom: 6px;
+      letter-spacing: 0.07em; text-transform: uppercase;
+    }
+    input[type="password"], input[type="text"] {
+      width: 100%; height: 42px; padding: 0 44px 0 14px;
+      border: 1.5px solid #cbd5e0; border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+      background: #fff; color: #1a202c; outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    input:focus {
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
+    }
+    input.valid-field   { border-color: #38a169 !important; }
+    input.invalid-field { border-color: #e53e3e !important; }
+
+    /* ── Password wrapper ── */
+    .pw-wrap { position: relative; }
+    .toggle-pw {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: #a0aec0; font-size: 11.5px; font-family: inherit;
+      padding: 2px 6px; border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .toggle-pw:hover { color: #3182ce; background: #ebf4ff; }
+
+    /* ── Strength bar ── */
+    .strength-track {
+      height: 5px; background: #edf2f7;
+      border-radius: 3px; overflow: hidden; margin-top: 9px;
+    }
+    .strength-fill {
+      height: 100%; border-radius: 3px;
+      width: 0; transition: width 0.4s cubic-bezier(.4,0,.2,1), background 0.3s;
+    }
+    .strength-label {
+      font-size: 11.5px; color: #718096;
+      margin-top: 5px; min-height: 16px;
+      transition: color 0.2s;
+    }
+
+    /* ── Hints ── */
+    .hints {
+      margin-top: 8px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+    }
+    .hint {
+      font-size: 11.5px; color: #a0aec0;
+      display: flex; align-items: center; gap: 6px;
+      transition: color 0.2s;
+    }
+    .hint-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #e2e8f0; flex-shrink: 0;
+      transition: background 0.25s, transform 0.2s;
+    }
+    .hint.met { color: #276749; }
+    .hint.met .hint-dot { background: #38a169; transform: scale(1.25); }
+
+    /* ── Button row ── */
+    .btn-row { display: flex; gap: 10px; margin-top: 1.25rem; }
+    .btn-primary {
+      padding: 10px 22px;
+      background: #0c2340; color: white;
+      border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #1a3a5c;
+      box-shadow: 0 3px 10px rgba(12,35,64,0.25);
+    }
+    .btn-primary:active:not(:disabled) { transform: scale(0.97); }
+    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: none;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast {
+      display: none; margin-top: 1rem;
+      padding: 11px 14px; border-radius: 8px;
+      font-size: 13px; border: 1px solid;
+    }
+    .toast.show { display: block; animation: toastIn 0.2s ease; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .toast.success { background: #f0fff4; color: #276749; border-color: #9ae6b4; }
+    .toast.error   { background: #fff5f5; color: #c53030; border-color: #feb2b2; }
+
+    /* ── Debug hash display ── */
+    .hash-display {
+      margin-top: 1rem; padding: 12px 14px;
+      background: #1a202c; color: #68d391; border-radius: 8px;
+      font-family: "Courier New", monospace; font-size: 11px;
+      word-break: break-all; display: none;
+      border: 1px solid #2d3748; line-height: 1.6;
+    }
+
+    /* ── Logout confirm overlay ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .confirm-box {
+      background: white; border-radius: 14px;
+      padding: 2rem; max-width: 360px; width: 90%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      text-align: center;
+      animation: scaleIn 0.2s ease;
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .confirm-box h3 { font-size: 17px; font-weight: 700; color: #1a202c; margin-bottom: 8px; }
+    .confirm-box p  { font-size: 13px; color: #718096; margin-bottom: 1.5rem; }
+    .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-cancel {
+      padding: 9px 20px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+      background: white; color: #4a5568; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: #f7fafc; }
+    .btn-confirm-red {
+      padding: 9px 20px; border-radius: 8px; border: none;
+      background: #c53030; color: white; font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    .btn-confirm-red:hover { background: #9b2c2c; }
+
+    /* Dark Mode Styles */
+    body.dark-mode {
+      background: #1a202c;
+      color: #e2e8f0;
+    }
+    body.dark-mode nav {
+      background: #0f1621;
+    }
+    body.dark-mode .page {
+      background: #1a202c;
+    }
+    body.dark-mode .profile-header {
+      background: linear-gradient(135deg, #0f1621 0%, #1e3a5f 100%);
+    }
+    body.dark-mode .profile-header h1 {
+      color: #e2e8f0;
+    }
+    body.dark-mode .profile-info-grid {
+      background: #2d3748;
+      border-color: #4a5568;
+    }
+    body.dark-mode .info-item-label {
+      color: #a0aec0;
+    }
+    body.dark-mode .info-item-value {
+      color: #e2e8f0;
+    }
+    body.dark-mode .confirm-box {
+      background: #2d3748;
+    }
+    body.dark-mode .confirm-box h3 {
+      color: #e2e8f0;
+    }
+    body.dark-mode .confirm-box p {
+      color: #a0aec0;
+    }
+    body.dark-mode .btn-cancel {
+      background: #4a5568;
+      color: #e2e8f0;
+      border-color: #718096;
+    }
+    body.dark-mode .btn-cancel:hover {
+      background: #718096;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Logout overlay -->
+
+<div class="overlay" id="logoutOverlay">
+  <div class="confirm-box">
+    <h3>Sign out?</h3>
+    <p>Your session will be cleared and you'll return to the login page.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeLogout()">Cancel</button>
+      <button class="btn-confirm-red" onclick="confirmLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openLogout() {
+  document.getElementById("logoutOverlay").style.display = "flex";
+}
+
+function closeLogout() {
+  document.getElementById("logoutOverlay").style.display = "none";
+}
+
+function confirmLogout() {
+  window.location.href = '/logout';
+}
+</script>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-brand" href="/dashboard">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1z"/>
+      </svg>
+    </div>
+    <span class="nav-title">SecureReg</span>
+  </a>
+
+  <div class="nav-links">
+    <a class="nav-link" href="/dashboard">Dashboard</a>
+    <a class="nav-link active" href="/profile">Profile</a>
+
+    <button class="logout-btn" type="button" onclick="openLogout()">
+      <svg viewBox="0 0 24 24">
+        <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 0 2 2h8v-2H4V5z"/>
+      </svg>
+      Sign out
+    </button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Account details card -->
+  <div class="card">
+    <div class="card-title">
+      <div class="card-icon icon-blue">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+      </div>
+      Account details
+    </div>
+
+    <div class="avatar-block">
+      <div class="avatar">{{ user.username[0].upper() }}</div>
+      <div class="avatar-info">
+        <h2>{{ user.username }}</h2>
+        <p>Member since {{ user.created_at }}</p>
+      </div>
+    </div>
+
+    <div class="info-row">
+      <span class="info-key">Username</span>
+      <span class="info-val">{{ user.username }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Account created</span>
+      <span class="info-val">{{ user.created_at }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Last login</span>
+      <span class="info-val">{{ user.last_login or "—" }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Status</span>
+      <span class="info-val"><span class="badge badge-green">Active</span></span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Password storage</span>
+      <span class="info-val">bcrypt (work factor 12)</span>
+    </div>
+  </div>
+
+  <!-- Change password card -->
+  <div class="card">
+    <div class="card-title">
+      <div class="card-icon icon-orange">
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+      </div>
+      Change password
+    </div>
+
+    <!-- Current password -->
+    <div class="field">
+      <label for="current_pw">Current password</label>
+      <div class="pw-wrap">
+        <input type="password" id="current_pw" placeholder="Enter your current password"/>
+        <button class="toggle-pw" type="button" onclick="togglePw('current_pw', this)">show</button>
+      </div>
+    </div>
+
+    <!-- New password -->
+    <div class="field">
+      <label for="new_pw">New password</label>
+      <div class="pw-wrap">
+        <input type="password" id="new_pw"
+               placeholder="Enter a strong new password"
+               oninput="onNewPwInput(this.value)"/>
+        <button class="toggle-pw" type="button" onclick="togglePw('new_pw', this)">show</button>
+      </div>
+      <!-- Strength bar -->
+      <div class="strength-track">
+        <div class="strength-fill" id="strengthFill"></div>
+      </div>
+      <div class="strength-label" id="strengthLabel"></div>
+      <!-- Hints -->
+      <div class="hints">
+        <div class="hint" id="h-len">  <span class="hint-dot"></span>Min 8 characters</div>
+        <div class="hint" id="h-upper"><span class="hint-dot"></span>Uppercase (A–Z)</div>
+        <div class="hint" id="h-lower"><span class="hint-dot"></span>Lowercase (a–z)</div>
+        <div class="hint" id="h-num">  <span class="hint-dot"></span>Number (0–9)</div>
+        <div class="hint" id="h-spec"> <span class="hint-dot"></span>Special character</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="changeBtn" type="button" onclick="changePassword()">
+        <span class="spinner" id="pwSpinner"></span>
+        <span id="changeBtnText">Update password</span>
+      </button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="hash-display" id="hashDisplay"></div>
+  </div>
+
+</div>
+
+<script>
+  /* ═══════════════════════════════════════
+     DARK MODE INITIALIZATION
+  ═══════════════════════════════════════ */
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark-mode');
+  }
+
+  /* ═══════════════════════════════════════
+     COMMON PASSWORDS (client-side fallback)
+  ═══════════════════════════════════════ */
+  var COMMON_PASSWORDS = new Set([
+    "password","123456","password1","qwerty","letmein",
+    "welcome","monkey","dragon","master","123456789",
+    "abc123","iloveyou","admin","passw0rd","sunshine"
+  ]);
+
+  /* ═══════════════════════════════════════
+     PASSWORD RULES — client-side
+  ═══════════════════════════════════════ */
+  var strengthScore = 0;
+
+  function getPasswordRules(pw) {
+    return {
+      length:    pw.length >= 8,
+      uppercase: /[A-Z]/.test(pw),
+      lowercase: /[a-z]/.test(pw),
+      number:    /[0-9]/.test(pw),
+      special:   /[!@#$%^&*()\-_=+\[\]{};:'",.<>\/?\\|`~]/.test(pw)
+    };
+  }
+
+  async function onNewPwInput(pw) {
+    if (!pw) { resetStrength(); return; }
+
+    var rules    = getPasswordRules(pw);
+    var isCommon = COMMON_PASSWORDS.has(pw.toLowerCase());
+    var score    = Object.values(rules).filter(Boolean).length;
+
+    /* Try backend; fall back silently */
+    try {
+      var res = await fetch("/check-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw })
+      });
+      if (res.ok) {
+        var data = await res.json();
+        applyStrengthUI(data.rules, data.score, data.is_common);
+        return;
+      }
+    } catch (_) {}
+
+    applyStrengthUI(rules, score, isCommon);
+  }
+
+  function applyStrengthUI(rules, score, isCommon) {
+    strengthScore = isCommon ? 0 : score;
+
+    toggleHint("h-len",   rules.length);
+    toggleHint("h-upper", rules.uppercase);
+    toggleHint("h-lower", rules.lowercase);
+    toggleHint("h-num",   rules.number);
+    toggleHint("h-spec",  rules.special);
+
+    var fill  = document.getElementById("strengthFill");
+    var label = document.getElementById("strengthLabel");
+
+    if (isCommon) {
+      fill.style.width      = "20%";
+      fill.style.background = "#e53e3e";
+      label.textContent     = "Very weak \u2014 common password, choose another";
+      label.style.color     = "#e53e3e";
+      return;
+    }
+
+    var map = {
+      0: ["5%",   "#e53e3e", "",                              "#a0aec0"],
+      1: ["20%",  "#e53e3e", "Weak \u2014 keep going",        "#e53e3e"],
+      2: ["40%",  "#dd6b20", "Fair \u2014 add more variety",  "#dd6b20"],
+      3: ["60%",  "#d69e2e", "Medium \u2014 almost there",    "#d69e2e"],
+      4: ["80%",  "#38a169", "Good \u2014 one more to go",    "#38a169"],
+      5: ["100%", "#276749", "Strong password \u2713",        "#276749"]
+    };
+    var s = map[score] || map[0];
+    fill.style.width      = s[0];
+    fill.style.background = s[1];
+    label.textContent     = s[2];
+    label.style.color     = s[3];
+  }
+
+  function toggleHint(id, met) {
+    document.getElementById(id).classList.toggle("met", Boolean(met));
+  }
+
+  function resetStrength() {
+    strengthScore = 0;
+    document.getElementById("strengthFill").style.width = "0%";
+    document.getElementById("strengthLabel").textContent = "";
+    document.getElementById("strengthLabel").style.color = "#718096";
+    ["h-len","h-upper","h-lower","h-num","h-spec"].forEach(function(id) {
+      document.getElementById(id).classList.remove("met");
+    });
+  }
+
+  /* ═══════════════════════════════════════
+     TOGGLE PASSWORD VISIBILITY
+  ═══════════════════════════════════════ */
+  function togglePw(inputId, btn) {
+    var inp = document.getElementById(inputId);
+    var isText = inp.type === "text";
+    inp.type        = isText ? "password" : "text";
+    btn.textContent = isText ? "show" : "hide";
+  }
+
+  /* ═══════════════════════════════════════
+     CHANGE PASSWORD — submit
+  ═══════════════════════════════════════ */
+  async function changePassword() {
+    var current = document.getElementById("current_pw").value;
+    var newPw   = document.getElementById("new_pw").value;
+
+    if (!current) { showToast("Please enter your current password.", "error"); return; }
+    if (!newPw)   { showToast("Please enter a new password.", "error"); return; }
+    if (strengthScore < 4) {
+      showToast("New password is too weak. Meet all 5 requirements.", "error"); return;
+    }
+
+    setPwLoading(true);
+
+    try {
+      var res  = await fetch("/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ current_password: current, new_password: newPw })
+      });
+      var data = await res.json();
+
+      if (data.success) {
+        showToast(data.message || "Password updated successfully.", "success");
+        document.getElementById("current_pw").value = "";
+        document.getElementById("new_pw").value     = "";
+        resetStrength();
+        /* Show new hash for demo if returned */
+        if (data.hash_preview) {
+          var hd = document.getElementById("hashDisplay");
+          hd.style.display = "block";
+          hd.innerHTML =
+            '<strong style="color:#fbd38d">New bcrypt hash (demo):</strong><br>' +
+            escapeHtml(data.hash_preview);
+        }
+      } else {
+        showToast(data.error || "Failed to update password.", "error");
+      }
+    } catch (err) {
+      showToast("Cannot reach server. Make sure App.py is running.", "error");
+    }
+
+    setPwLoading(false);
+  }
+
+  function setPwLoading(on) {
+    var btn     = document.getElementById("changeBtn");
+    var spinner = document.getElementById("pwSpinner");
+    var text    = document.getElementById("changeBtnText");
+    btn.disabled          = on;
+    spinner.style.display = on ? "block" : "none";
+    text.textContent      = on ? "Updating\u2026" : "Update password";
+  }
+
+  /* ═══════════════════════════════════════
+     TOAST
+  ═══════════════════════════════════════ */
+  var toastTimer = null;
+  function showToast(msg, type) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className   = "toast " + type + " show";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { t.className = "toast"; }, 5000);
+  }
+
+  /* ═══════════════════════════════════════
+     LOGOUT CONFIRM
+  ═══════════════════════════════════════ */
+  function openLogout() {
+    document.getElementById("logoutOverlay").classList.add("show");
+  }
+  function closeLogout() {
+    document.getElementById("logoutOverlay").classList.remove("show");
+  }
+  document.getElementById("logoutOverlay").addEventListener("click", function(e) {
+    if (e.target === this) closeLogout();
+  });
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") closeLogout();
+  });
+
+  /* ═══════════════════════════════════════
+     HELPERS
+  ═══════════════════════════════════════ */
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;");
+  }
+</script>
+</body>
+</html>

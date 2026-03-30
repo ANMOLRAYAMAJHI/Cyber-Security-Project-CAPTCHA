@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Activity Log — SecureReg</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+      background: #f0f2f5; min-height: 100vh;
+    }
+
+    nav {
+      background: #0c2340; padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; transition: opacity 0.15s;
+    }
+    .nav-brand:hover { opacity: 0.85; }
+    .nav-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.13);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .nav-icon svg { width: 16px; height: 16px; fill: white; }
+    .nav-title { color: white; font-size: 15px; font-weight: 700; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      color: rgba(255,255,255,0.72); text-decoration: none; font-size: 13px;
+      padding: 6px 12px; border-radius: 6px; transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: rgba(255,255,255,0.16); color: white; font-weight: 600; }
+    .logout-btn {
+      color: rgba(255,255,255,0.72); background: none;
+      border: 1px solid rgba(255,255,255,0.22);
+      font-size: 13px; padding: 6px 14px; border-radius: 6px;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
+    .page {
+      max-width: 850px; margin: 0 auto;
+      padding: 2rem 1.5rem;
+      animation: fadeUp 0.35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-size: 26px; font-weight: 800; color: #1a202c; margin-bottom: 4px; }
+    .page-header p { font-size: 13px; color: #718096; }
+
+    .filters {
+      display: flex; gap: 10px; margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 8px 14px; border-radius: 6px;
+      border: 1px solid #cbd5e0; background: white;
+      font-size: 12px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .filter-btn.active {
+      background: #0c2340; color: white; border-color: #0c2340;
+    }
+
+    .activity-timeline {
+      position: relative;
+      padding-left: 30px;
+    }
+    .activity-timeline::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: #e2e8f0;
+    }
+
+    .activity-item {
+      padding-bottom: 1.5rem;
+      position: relative;
+    }
+    .activity-item::before {
+      content: '';
+      position: absolute;
+      left: -37px; top: 4px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #3182ce;
+      border: 3px solid white;
+      box-shadow: 0 0 0 1px #e2e8f0;
+    }
+    .activity-item.warning::before { background: #ed8936; }
+    .activity-item.danger::before { background: #e53e3e; }
+    .activity-item.success::before { background: #38a169; }
+
+    .activity-card {
+      background: white; border-radius: 10px;
+      border: 1px solid #e2e8f0; padding: 1.2rem;
+      transition: box-shadow 0.2s;
+    }
+    .activity-card:hover {
+      box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+    }
+
+    .activity-header {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 0.5rem;
+    }
+    .activity-title {
+      font-size: 14px; font-weight: 700;
+      color: #1a202c; margin-bottom: 4px;
+    }
+    .activity-time {
+      font-size: 12px; color: #a0aec0;
+      font-weight: 500;
+    }
+    .activity-details {
+      font-size: 12.5px; color: #718096;
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 8px;
+    }
+    .activity-icon {
+      width: 24px; height: 24px;
+      background: #f7fafc; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .activity-icon svg {
+      width: 12px; height: 12px;
+      fill: #718096;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 700;
+    }
+    .badge-success { background: #f0fff4; color: #276749; }
+    .badge-warning { background: #fffaf0; color: #7c2d12; }
+    .badge-danger { background: #fff5f5; color: #742a2a; }
+
+    .load-more {
+      display: block; width: 100%;
+      padding: 12px; border: 1px solid #e2e8f0;
+      border-radius: 8px; background: white;
+      text-align: center; font-size: 13px;
+      font-weight: 600; color: #3182ce;
+      cursor: pointer; margin-top: 1.5rem;
+      transition: background 0.15s;
+    }
+    .load-more:hover { background: #f7fafc; }
+
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .confirm-box {
+      background: white; border-radius: 14px;
+      padding: 2rem; max-width: 360px; width: 90%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      text-align: center;
+    }
+    .confirm-box h3 { font-size: 17px; font-weight: 700; color: #1a202c; margin-bottom: 8px; }
+    .confirm-box p { font-size: 13px; color: #718096; margin-bottom: 1.5rem; }
+    .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-cancel {
+      padding: 9px 20px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+      background: white; color: #4a5568; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-confirm-red {
+      padding: 9px 20px; border-radius: 8px; border: none;
+      background: #c53030; color: white; font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+
+    /* ══════════════════════════════════════
+       DARK MODE STYLES (GLOBAL)
+    ══════════════════════════════════════ */
+    body.dark-mode {
+      background: #1a202c;
+      color: #e2e8f0;
+    }
+    body.dark-mode nav {
+      background: #0f1621;
+    }
+    body.dark-mode .page {
+      background: #1a202c;
+    }
+    body.dark-mode .page-header h1 {
+      color: #e2e8f0;
+    }
+    body.dark-mode .page-header p {
+      color: #a0aec0;
+    }
+    body.dark-mode .filter-btn {
+      background: #2d3748;
+      color: #e2e8f0;
+      border-color: #4a5568;
+    }
+    body.dark-mode .filter-btn.active {
+      background: #0c2340;
+      color: white;
+      border-color: #0c2340;
+    }
+    body.dark-mode .activity-card {
+      background: #2d3748;
+      border-color: #4a5568;
+    }
+    body.dark-mode .activity-title {
+      color: #e2e8f0;
+    }
+    body.dark-mode .activity-time {
+      color: #a0aec0;
+    }
+    body.dark-mode .activity-details {
+      color: #cbd5e0;
+    }
+    body.dark-mode .confirm-box {
+      background: #2d3748;
+    }
+    body.dark-mode .confirm-box h3 {
+      color: #e2e8f0;
+    }
+    body.dark-mode .confirm-box p {
+      color: #a0aec0;
+    }
+    body.dark-mode .btn-cancel {
+      background: #4a5568;
+      color: #e2e8f0;
+      border-color: #718096;
+    }
+    body.dark-mode .btn-cancel:hover {
+      background: #718096;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/dashboard">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1z" fill="white"/>
+      </svg>
+    </div>
+    <span class="nav-title">SecureReg</span>
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="/dashboard">Dashboard</a>
+    <a class="nav-link active" href="/activity">Activity</a>
+    <a class="nav-link" href="/users">Users</a>
+    <a class="nav-link" href="/settings">Settings</a>
+    <button class="logout-btn" type="button" onclick="openLogout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Activity Log</h1>
+    <p>Track your account activity and security events</p>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterActivity('all')">All Events</button>
+    <button class="filter-btn" onclick="filterActivity('login')">Login</button>
+    <button class="filter-btn" onclick="filterActivity('security')">Security</button>
+    <button class="filter-btn" onclick="filterActivity('changes')">Changes</button>
+  </div>
+
+  <div class="activity-timeline" id="activityTimeline">
+    <!-- Activity items loaded from API -->
+  </div>
+</div>
+
+<div class="overlay" id="logoutOverlay">
+  <div class="confirm-box">
+    <h3>Sign out?</h3>
+    <p>Your session will be cleared and you'll return to the login page.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeLogout()">Cancel</button>
+      <button class="btn-confirm-red" onclick="confirmLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Initialize dark mode and load activities on page load
+document.addEventListener('DOMContentLoaded', () => {
+  // Apply dark mode if enabled
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark-mode');
+  }
+  filterActivity('all');
+});
+
+// Filter activities by type
+function filterActivity(type) {
+  // Update active button
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.querySelector(`button[onclick="filterActivity('${type}')"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  // Fetch filtered activities
+  fetch(`/api/activity?type=${type}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        renderActivities(data.activities);
+      }
+    })
+    .catch(err => console.error('Error loading activities:', err));
+}
+
+// Render activities in timeline
+function renderActivities(activities) {
+  const container = document.getElementById('activityTimeline');
+  
+  if (activities.length === 0) {
+    container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #718096;">No activity found for this filter.</div>';
+    return;
+  }
+  
+  container.innerHTML = activities.map(activity => `
+    <div class="activity-item ${activity.status}">
+      <div class="activity-card">
+        <div class="activity-header">
+          <div>
+            <div class="activity-title">${activity.title}</div>
+            <div class="activity-time">${activity.time}</div>
+          </div>
+          <span class="badge badge-${activity.status}">${activity.status === 'success' ? 'Success' : activity.status === 'warning' ? 'Alert' : 'Info'}</span>
+        </div>
+        <div class="activity-details">
+          <div>${activity.icon} ${activity.details}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openLogout() {
+  document.getElementById("logoutOverlay").style.display = "flex";
+}
+function closeLogout() {
+  document.getElementById("logoutOverlay").style.display = "none";
+}
+function confirmLogout() {
+  window.location.href = '/logout';
+}
+</script>
+</body>
+</html>

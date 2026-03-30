@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings — SecureReg</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+
+    nav {
+      background: #0c2340;
+      padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; transition: opacity 0.15s;
+    }
+    .nav-brand:hover { opacity: 0.85; }
+    .nav-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.13);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .nav-icon svg { width: 16px; height: 16px; fill: white; }
+    .nav-title { color: white; font-size: 15px; font-weight: 700; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      color: rgba(255,255,255,0.72); text-decoration: none; font-size: 13px;
+      padding: 6px 12px; border-radius: 6px; transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: rgba(255,255,255,0.16); color: white; font-weight: 600; }
+    .logout-btn {
+      color: rgba(255,255,255,0.72); background: none;
+      border: 1px solid rgba(255,255,255,0.22);
+      font-size: 13px; padding: 6px 14px; border-radius: 6px;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
+    .page {
+      max-width: 920px; margin: 0 auto;
+      padding: 2rem 1.5rem;
+      animation: fadeUp 0.35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-size: 26px; font-weight: 800; color: #1a202c; margin-bottom: 4px; }
+    .page-header p { font-size: 13px; color: #718096; }
+
+    .settings-grid { display: grid; grid-template-columns: 250px 1fr; gap: 2rem; }
+
+    .settings-nav {
+      background: white; border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 1rem 0; height: fit-content;
+      position: sticky; top: 80px;
+    }
+    .settings-nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; cursor: pointer;
+      color: #718096; text-decoration: none;
+      font-size: 13px; transition: background 0.15s, color 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .settings-nav-item:hover {
+      background: #f7fafc; color: #2d3748;
+    }
+    .settings-nav-item.active {
+      background: #ebf4ff; color: #3182ce;
+      border-left-color: #3182ce; font-weight: 600;
+    }
+    .settings-nav-item svg { width: 16px; height: 16px; }
+
+    .settings-sections { display: none; }
+    .settings-sections.active { display: block; animation: fadeUp 0.35s ease both; }
+
+    .setting-card {
+      background: white; border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .setting-title {
+      font-size: 15px; font-weight: 700;
+      color: #1a202c; margin-bottom: 0.5rem;
+    }
+    .setting-desc {
+      font-size: 12.5px; color: #a0aec0;
+      margin-bottom: 1.25rem;
+    }
+
+    .toggle-switch {
+      display: flex; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid #f7fafc;
+    }
+    .toggle-switch:last-child { border-bottom: none; }
+    .toggle-label {
+      flex: 1; font-size: 13px; color: #1a202c; font-weight: 500;
+    }
+    .toggle-desc {
+      font-size: 12px; color: #a0aec0; margin-top: 2px;
+    }
+
+    .toggle {
+      position: relative; width: 44px; height: 24px;
+      background: #cbd5e0; border-radius: 12px;
+      cursor: pointer; transition: background 0.3s;
+    }
+    .toggle.active { background: #38a169; }
+    .toggle::after {
+      content: ""; position: absolute;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: white; top: 2px; left: 2px;
+      transition: left 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .toggle.active::after { left: 22px; }
+
+    .password-section {
+      background: white; border-radius: 12px;
+      border: 1px solid #e2e8f0; padding: 1.5rem;
+    }
+    .field { margin-bottom: 1.2rem; }
+    label {
+      display: block; font-size: 12px;
+      font-weight: 700; color: #4a5568;
+      margin-bottom: 6px; text-transform: uppercase;
+    }
+    input[type="password"] {
+      width: 100%; height: 40px; padding: 0 12px;
+      border: 1.5px solid #cbd5e0; border-radius: 8px;
+      font-size: 13px; font-family: inherit;
+      outline: none; transition: border-color 0.15s;
+    }
+    input[type="password"]:focus {
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
+    }
+
+    .btn {
+      padding: 10px 20px; border-radius: 8px;
+      border: none; font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .btn-primary {
+      background: #0c2340; color: white;
+    }
+    .btn-primary:hover {
+      background: #1a3a5c; box-shadow: 0 3px 10px rgba(12,35,64,0.25);
+    }
+    .btn-danger {
+      background: #c53030; color: white;
+    }
+    .btn-danger:hover { background: #9b2c2c; }
+
+    .success-msg {
+      background: #f0fff4; border: 1px solid #c6f6d5;
+      color: #276749; padding: 12px 16px;
+      border-radius: 8px; margin-bottom: 1rem;
+      font-size: 13px; display: none;
+      animation: fadeUp 0.3s ease;
+    }
+    .success-msg.show { display: block; }
+
+    .two-factor {
+      background: #fef5e7; border: 1px solid #f5d76e;
+      border-radius: 8px; padding: 1rem;
+    }
+    .two-factor h3 {
+      font-size: 13px; font-weight: 700;
+      color: #1a202c; margin-bottom: 0.5rem;
+    }
+    .two-factor p {
+      font-size: 12px; color: #7d6608;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .settings-grid { grid-template-columns: 1fr; }
+      .settings-nav { display: flex; overflow-x: auto; position: static; }
+      .settings-nav-item { white-space: nowrap; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/dashboard">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1z" fill="white"/>
+      </svg>
+    </div>
+    <span class="nav-title">SecureReg</span>
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="/dashboard">Dashboard</a>
+    <a class="nav-link" href="/activity">Activity</a>
+    <a class="nav-link" href="/users">Users</a>
+    <a class="nav-link active" href="/settings">Settings</a>
+    <button class="logout-btn" type="button" onclick="openLogout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Settings</h1>
+    <p>Manage your account preferences and security settings</p>
+  </div>
+
+  <div class="settings-grid">
+    <div class="settings-nav">
+      <a class="settings-nav-item active" data-section="general">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l1.72-1.35c.15-.12.19-.34.1-.51l-1.63-2.83c-.12-.22-.37-.29-.59-.22l-2.03.8c-.42-.32-.9-.6-1.42-.8l-.38-2.15C14.4 2.18 14.23 1 13 1h-2c-1.23 0-1.4 1.18-1.39 2.35l-.38 2.15c-.52.2-1 .48-1.41.8l-2.04-.8c-.22-.09-.47 0-.59.22L2.74 8.87c-.12.21-.08.44.1.51l1.72 1.35c-.05.3-.07.62-.07.94s.02.64.07.94l-1.72 1.35c-.15.12-.19.34-.1.51l1.63 2.83c.12.22.37.29.59.22l2.03-.8c.42.32.9.6 1.42.8l.38 2.15c.16 1.17.33 2.35 2.39 2.35h2c1.23 0 1.4-1.18 1.39-2.35l.38-2.15c.52-.2 1-.48 1.41-.8l2.04.8c.22.09.47 0 .59-.22l1.63-2.83c.12-.22.07-.44-.1-.51l-1.72-1.35zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+        General
+      </a>
+      <a class="settings-nav-item" data-section="system">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 1h14c1.1 0 2 .9 2 2v4h2v2h-2v6h2v2h-2v4c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-4H1v-2h2v-6H1V7h2V3c0-1.1.9-2 2-2zm0 2v14h14V3H5z"/></svg>
+        System
+      </a>
+      <a class="settings-nav-item" data-section="privacy">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+        Privacy
+      </a>
+      <a class="settings-nav-item" data-section="notifications">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        Notifications
+      </a>
+    </div>
+
+    <div class="settings-content">
+      <!-- General Settings -->
+      <div class="settings-sections active" data-section="general">
+        <div class="setting-card">
+          <div class="setting-title">Display Preferences</div>
+          <div class="setting-desc">Customize how the interface appears</div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Dark mode</div>
+              <div class="toggle-desc">Use dark theme for easier viewing</div>
+            </div>
+            <div class="toggle" id="darkMode" onclick="toggleDarkMode()"></div>
+          </div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Compact view</div>
+              <div class="toggle-desc">Show more content with condensed spacing</div>
+            </div>
+            <div class="toggle" id="compactView" onclick="toggleCompactView()"></div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <div class="setting-title">Account Information</div>
+          <div class="setting-desc">Your basic account details</div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Username</div>
+              <div class="toggle-desc" id="usernameDisplay">-</div>
+            </div>
+          </div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Member since</div>
+              <div class="toggle-desc" id="memberSinceDisplay">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Settings -->
+      <div class="settings-sections" data-section="system">
+        <div class="setting-card">
+          <div class="setting-title">System Status</div>
+          <div class="setting-desc">Your system is up to date</div>
+          <div style="padding: 1rem 0;">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px 0;">
+              <div style="width: 12px; height: 12px; background: #38a169; border-radius: 50%;"></div>
+              <div style="font-size: 13px; color: #276749;">Your system is running the latest version</div>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 12px;">Check for Updates</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy Settings -->
+      <div class="settings-sections" data-section="privacy">
+        <div class="setting-card">
+          <div class="setting-title">Privacy Controls</div>
+          <div class="setting-desc" style="border-bottom: 1px solid #fbd68d; background: #fffaf0; padding: 12px; border-radius: 6px; margin-bottom: 1rem; font-size: 12px; color: #7d6608;">
+            ⚠️ <strong>Company Requirement:</strong> These settings are recommended to remain unchecked for company security compliance. Enable only if necessary.
+          </div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Profile visibility</div>
+              <div class="toggle-desc">Allow other users to see your profile</div>
+            </div>
+            <div class="toggle" id="profileVis" onclick="togglePrivacySetting('profile_visibility')"></div>
+          </div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Activity status</div>
+              <div class="toggle-desc">Show when you were last active</div>
+            </div>
+            <div class="toggle" id="activityStatus" onclick="togglePrivacySetting('activity_status')"></div>
+          </div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Search visibility</div>
+              <div class="toggle-desc">Allow profile to appear in search results</div>
+            </div>
+            <div class="toggle" id="searchVis" onclick="togglePrivacySetting('search_visibility')"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="settings-sections" data-section="notifications">
+        <div class="setting-card">
+          <div class="setting-title">Notification Preferences</div>
+          <div class="setting-desc">Manage how you receive notifications</div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Email notifications</div>
+              <div class="toggle-desc">Receive important updates via email</div>
+            </div>
+            <div class="toggle active" id="emailNotif" onclick="toggleNotificationSetting('email_notifications')"></div>
+          </div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Login alerts</div>
+              <div class="toggle-desc">Notify me of new logins</div>
+            </div>
+            <div class="toggle active" id="loginAlerts" onclick="toggleNotificationSetting('login_alerts')"></div>
+          </div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Security notifications</div>
+              <div class="toggle-desc">Alerts about password changes and security events</div>
+            </div>
+            <div class="toggle active" id="securityNotif" onclick="toggleNotificationSetting('security_notifications')"></div>
+          </div>
+          <div class="toggle-switch">
+            <div>
+              <div class="toggle-label">Marketing emails</div>
+              <div class="toggle-desc">News and special offers</div>
+            </div>
+            <div class="toggle" id="marketingEmails" onclick="toggleNotificationSetting('marketing_emails')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="logoutOverlay">
+  <div class="confirm-box">
+    <h3>Sign out?</h3>
+    <p>Your session will be cleared and you'll return to the login page.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeLogout()">Cancel</button>
+      <button class="btn-confirm-red" onclick="confirmLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let settingsState = {
+  darkMode: false,
+  compactView: false,
+  privacy: {
+    profile_visibility: false,
+    activity_status: false,
+    search_visibility: false
+  },
+  notifications: {
+    email_notifications: true,
+    login_alerts: true,
+    security_notifications: true,
+    marketing_emails: false
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  loadPrivacySettings();
+  setupNavigation();
+});
+
+async function loadSettings() {
+  try {
+    const res = await fetch('/api/settings/general');
+    const data = await res.json();
+    
+    settingsState.darkMode = data.dark_mode || localStorage.getItem('darkMode') === 'true' || false;
+    settingsState.compactView = data.compact_view || false;
+    settingsState.notifications = data.notifications || settingsState.notifications;
+    
+    // Apply dark mode if active
+    if (settingsState.darkMode) {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkMode').classList.add('active');
+    }
+    
+    // Apply compact view if active
+    if (settingsState.compactView) {
+      document.body.classList.add('compact-layout');
+      document.getElementById('compactView').classList.add('active');
+    }
+    
+    // Set notification toggles
+    if (settingsState.notifications.email_notifications) document.getElementById('emailNotif').classList.add('active');
+    if (settingsState.notifications.login_alerts) document.getElementById('loginAlerts').classList.add('active');
+    if (settingsState.notifications.security_notifications) document.getElementById('securityNotif').classList.add('active');
+    if (settingsState.notifications.marketing_emails) document.getElementById('marketingEmails').classList.add('active');
+    
+  } catch (error) {
+    console.error('Error loading general settings:', error);
+  }
+  
+  // Load user info
+  try {
+    const res = await fetch('/dashboard');
+    // Extract username from session or show default
+    document.getElementById('usernameDisplay').textContent = sessionStorage.getItem('username') || 'User';
+    document.getElementById('memberSinceDisplay').textContent = sessionStorage.getItem('created_at') || 'N/A';
+  } catch (error) {
+    console.error('Error loading user info:', error);
+  }
+}
+
+async function loadPrivacySettings() {
+  try {
+    const res = await fetch('/api/settings/privacy');
+    const data = res.json();
+    
+    if (data.profile_visibility) document.getElementById('profileVis').classList.add('active');
+    if (data.activity_status) document.getElementById('activityStatus').classList.add('active');
+    if (data.search_visibility) document.getElementById('searchVis').classList.add('active');
+    
+  } catch (error) {
+    console.error('Error loading privacy settings:', error);
+  }
+}
+
+function setupNavigation() {
+  document.querySelectorAll('[data-section]').forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      const section = this.dataset.section;
+      document.querySelectorAll('.settings-nav-item').forEach(nav => nav.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelectorAll('.settings-sections').forEach(sec => sec.classList.remove('active'));
+      document.querySelector(`[data-section="${section}"].settings-sections`).classList.add('active');
+    });
+  });
+}
+
+async function toggleDarkMode() {
+  const toggle = document.getElementById('darkMode');
+  const newState = !toggle.classList.contains('active');
+  toggle.classList.toggle('active');
+  
+  if (newState) {
+    document.body.classList.add('dark-mode');
+    localStorage.setItem('darkMode', 'true');
+  } else {
+    document.body.classList.remove('dark-mode');
+    localStorage.setItem('darkMode', 'false');
+  }
+  
+  try {
+    await fetch('/api/settings/general', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dark_mode: newState })
+    });
+  } catch (error) {
+    console.error('Error saving dark mode setting:', error);
+  }
+}
+
+async function toggleCompactView() {
+  const toggle = document.getElementById('compactView');
+  const newState = !toggle.classList.contains('active');
+  toggle.classList.toggle('active');
+  
+  if (newState) {
+    document.body.classList.add('compact-layout');
+  } else {
+    document.body.classList.remove('compact-layout');
+  }
+  
+  try {
+    await fetch('/api/settings/general', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ compact_view: newState })
+    });
+  } catch (error) {
+    console.error('Error saving compact view setting:', error);
+  }
+}
+
+async function togglePrivacySetting(setting) {
+  const map = {
+    'profile_visibility': 'profileVis',
+    'activity_status': 'activityStatus',
+    'search_visibility': 'searchVis'
+  };
+  
+  const toggle = document.getElementById(map[setting]);
+  const newState = !toggle.classList.contains('active');
+  toggle.classList.toggle('active');
+  
+  try {
+    await fetch('/api/settings/privacy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [setting]: newState })
+    });
+  } catch (error) {
+    console.error('Error saving privacy setting:', error);
+  }
+}
+
+async function toggleNotificationSetting(setting) {
+  const map = {
+    'email_notifications': 'emailNotif',
+    'login_alerts': 'loginAlerts',
+    'security_notifications': 'securityNotif',
+    'marketing_emails': 'marketingEmails'
+  };
+  
+  const toggle = document.getElementById(map[setting]);
+  const newState = !toggle.classList.contains('active');
+  toggle.classList.toggle('active');
+  
+  try {
+    await fetch('/api/settings/general', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notifications: { [setting]: newState } })
+    });
+  } catch (error) {
+    console.error('Error saving notification setting:', error);
+  }
+}
+
+function openLogout() {
+  document.getElementById("logoutOverlay").style.display = "flex";
+}
+
+function closeLogout() {
+  document.getElementById("logoutOverlay").style.display = "none";
+}
+
+function confirmLogout() {
+  window.location.href = '/logout';
+}
+</script>
+
+<style>
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .confirm-box {
+    background: white; border-radius: 14px;
+    padding: 2rem; max-width: 360px; width: 90%;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    text-align: center;
+  }
+  .confirm-box h3 { font-size: 17px; font-weight: 700; color: #1a202c; margin-bottom: 8px; }
+  .confirm-box p { font-size: 13px; color: #718096; margin-bottom: 1.5rem; }
+  .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+  .btn-cancel {
+    padding: 9px 20px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+    background: white; color: #4a5568; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-cancel:hover { background: #f7fafc; }
+  .btn-confirm-red {
+    padding: 9px 20px; border-radius: 8px; border: none;
+    background: #c53030; color: white; font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-confirm-red:hover { background: #9b2c2c; }
+
+  /* Dark Mode Styles */
+  body.dark-mode {
+    background: #1a202c;
+    color: #e2e8f0;
+  }
+  body.dark-mode nav {
+    background: #0f1621;
+  }
+  body.dark-mode .setting-card {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+  body.dark-mode .setting-title {
+    color: #e2e8f0;
+  }
+  body.dark-mode .setting-desc {
+    color: #a0aec0;
+  }
+  body.dark-mode .toggle-label {
+    color: #e2e8f0;
+  }
+  body.dark-mode .settings-nav {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+  body.dark-mode .settings-nav-item {
+    color: #a0aec0;
+  }
+  body.dark-mode .settings-nav-item:hover {
+    background: #4a5568;
+    color: #e2e8f0;
+  }
+  body.dark-mode .settings-nav-item.active {
+    background: #3182ce;
+    color: white;
+  }
+
+  /* Compact Layout Styles */
+  body.compact-layout .page {
+    padding: 1rem 1rem;
+  }
+  body.compact-layout .page-header {
+    margin-bottom: 1rem;
+  }
+  body.compact-layout .page-header h1 {
+    font-size: 20px;
+    margin-bottom: 2px;
+  }
+  body.compact-layout .setting-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  body.compact-layout .toggle-switch {
+    padding: 8px 0;
+  }
+</style>
+</body>
+</html>

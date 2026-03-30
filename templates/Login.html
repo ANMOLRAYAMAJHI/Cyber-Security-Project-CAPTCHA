@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In — SecureReg</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 2.25rem;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      animation: fadeUp 0.35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    /* Shake animation for wrong credentials */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-6px); }
+      80%      { transform: translateX(6px); }
+    }
+    .card.shake { animation: shake 0.4s ease; }
+
+    /* ── Brand ── */
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 1.75rem; }
+    .brand-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: #0c2340;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .brand-icon svg { width: 22px; height: 22px; fill: white; }
+    .brand-name { font-size: 15px; font-weight: 700; color: #1a202c; line-height: 1.2; }
+    .brand-sub  { font-size: 11.5px; color: #718096; }
+
+    h2 { font-size: 22px; font-weight: 700; color: #1a202c; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #718096; margin-bottom: 1.75rem; }
+
+    /* ── Fields ── */
+    .field { margin-bottom: 1.1rem; }
+    label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: #4a5568; margin-bottom: 6px;
+      letter-spacing: 0.07em; text-transform: uppercase;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%; height: 44px; padding: 0 14px;
+      border: 1.5px solid #cbd5e0; border-radius: 8px;
+      font-size: 14px; font-family: inherit;
+      background: #fff; color: #1a202c; outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+    }
+    input:focus {
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
+    }
+    input.error-field { border-color: #e53e3e !important; background: #fff5f5; }
+
+    /* ── Password toggle ── */
+    .pw-wrap { position: relative; }
+    .toggle-pw {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: #a0aec0; font-size: 11.5px; font-family: inherit;
+      padding: 2px 6px; border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .toggle-pw:hover { color: #3182ce; background: #ebf4ff; }
+
+    /* ── Submit button ── */
+    .submit-btn {
+      width: 100%; height: 44px; margin-top: 0.6rem;
+      background: #0c2340; color: #fff; border: none;
+      border-radius: 8px; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+      letter-spacing: 0.02em;
+    }
+    .submit-btn:hover:not(:disabled) {
+      background: #1a3a5c;
+      box-shadow: 0 4px 14px rgba(12,35,64,0.28);
+    }
+    .submit-btn:active:not(:disabled) { transform: scale(0.98); }
+    .submit-btn:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast {
+      display: none; margin-top: 1rem;
+      padding: 11px 14px; border-radius: 8px;
+      font-size: 13px; border: 1px solid;
+      animation: toastIn 0.2s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .toast.show    { display: block; }
+    .toast.success { background: #f0fff4; color: #276749; border-color: #9ae6b4; }
+    .toast.error   { background: #fff5f5; color: #c53030; border-color: #feb2b2; }
+
+    /* ── Divider & footer ── */
+    .divider { border: none; border-top: 1px solid #edf2f7; margin: 1.5rem 0; }
+    .footer-link { text-align: center; font-size: 12.5px; color: #718096; }
+    .footer-link a {
+      color: #3182ce; text-decoration: none; font-weight: 600;
+      transition: color 0.15s;
+    }
+    .footer-link a:hover { color: #2b6cb0; text-decoration: underline; }
+
+    /* ── Security badge ── */
+    .secure-note {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 11.5px; color: #a0aec0; margin-top: 1.2rem;
+    }
+    .secure-note svg { width: 12px; height: 12px; fill: #a0aec0; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+<div class="card" id="card">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1z"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">SecureReg</div>
+      <div class="brand-sub">CET324 — Advanced CyberSecurity</div>
+    </div>
+  </div>
+
+  <h2>Welcome back</h2>
+  <p class="subtitle">Sign in to your SecureReg account to continue.</p>
+
+  <!-- Username -->
+  <div class="field">
+    <label for="username">Username</label>
+    <input type="text" id="username"
+           placeholder="Your username"
+           autocomplete="username"
+           oninput="clearFieldError(this)"/>
+  </div>
+
+  <!-- Password -->
+  <div class="field">
+    <label for="password">Password</label>
+    <div class="pw-wrap">
+      <input type="password" id="password"
+             placeholder="Your password"
+             autocomplete="current-password"
+             oninput="clearFieldError(this)"/>
+      <button class="toggle-pw" type="button" onclick="togglePw()">show</button>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <button class="submit-btn" id="submitBtn" type="button" onclick="handleLogin()">
+    <span class="spinner" id="spinner"></span>
+    <span id="btnText">Sign in</span>
+  </button>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Secure note -->
+  <div class="secure-note">
+    <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1z"/></svg>
+    Secured with bcrypt &amp; server-side sessions
+  </div>
+
+  <hr class="divider"/>
+  <p class="footer-link">
+  Don't have an account? <a href="/register">Create one</a>
+</p>
+</div>
+
+<script>
+  /* ── Toggle password visibility ── */
+  function togglePw() {
+    var inp = document.getElementById("password");
+    var btn = document.querySelector(".toggle-pw");
+    var isText = inp.type === "text";
+    inp.type        = isText ? "password" : "text";
+    btn.textContent = isText ? "show" : "hide";
+  }
+
+  /* ── Clear red border on re-type ── */
+  function clearFieldError(inp) {
+    inp.classList.remove("error-field");
+  }
+
+  /* ── Toast helper ── */
+  var toastTimer = null;
+  function showToast(msg, type) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className   = "toast " + type + " show";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { t.className = "toast"; }, 5000);
+  }
+
+  /* ── Loading state ── */
+  function setLoading(on) {
+    var btn     = document.getElementById("submitBtn");
+    var spinner = document.getElementById("spinner");
+    var text    = document.getElementById("btnText");
+    btn.disabled          = on;
+    spinner.style.display = on ? "block" : "none";
+    text.textContent      = on ? "Signing in\u2026" : "Sign in";
+  }
+
+  /* ── Shake card ── */
+  function shakeCard() {
+    var card = document.getElementById("card");
+    card.classList.remove("shake");
+    /* Force reflow so animation replays */
+    void card.offsetWidth;
+    card.classList.add("shake");
+    card.addEventListener("animationend", function() {
+      card.classList.remove("shake");
+    }, { once: true });
+  }
+
+  /* ── Mark fields red ── */
+  function markError(ids) {
+    ids.forEach(function(id) {
+      document.getElementById(id).classList.add("error-field");
+    });
+  }
+
+  /* ── Main login handler ── */
+  async function handleLogin() {
+    var username = document.getElementById("username").value.trim();
+    var password = document.getElementById("password").value;
+
+    /* Client-side validation */
+    if (!username && !password) {
+      markError(["username", "password"]);
+      showToast("Please fill in your username and password.", "error");
+      shakeCard(); return;
+    }
+    if (!username) {
+      markError(["username"]);
+      showToast("Please enter your username.", "error");
+      shakeCard(); return;
+    }
+    if (!password) {
+      markError(["password"]);
+      showToast("Please enter your password.", "error");
+      shakeCard(); return;
+    }
+
+    setLoading(true);
+
+    try {
+      var res  = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username, password: password })
+      });
+      var data = await res.json();
+
+      if (data.success) {
+        showToast("Login successful! Redirecting\u2026", "success");
+        setTimeout(function() {
+          window.location.href = data.redirect || "/dashboard";
+        }, 800);
+      } else {
+        showToast(data.error || "Invalid username or password.", "error");
+        markError(["username", "password"]);
+        shakeCard();
+        /* Clear password field on failed login for security */
+        document.getElementById("password").value = "";
+      }
+    } catch (err) {
+      showToast("Cannot reach server. Make sure App.py is running.", "error");
+      shakeCard();
+    }
+
+    setLoading(false);
+  }
+
+  /* ── Enter key submits ── */
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") handleLogin();
+  });
+</script>
+</body>
+</html>

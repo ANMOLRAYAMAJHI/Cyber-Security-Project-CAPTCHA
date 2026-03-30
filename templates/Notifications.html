@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Notifications — SecureReg</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+      background: #f0f2f5; min-height: 100vh;
+    }
+
+    nav {
+      background: #0c2340; padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; transition: opacity 0.15s;
+    }
+    .nav-brand:hover { opacity: 0.85; }
+    .nav-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.13);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .nav-icon svg { width: 16px; height: 16px; fill: white; }
+    .nav-title { color: white; font-size: 15px; font-weight: 700; }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      color: rgba(255,255,255,0.72); text-decoration: none; font-size: 13px;
+      padding: 6px 12px; border-radius: 6px; transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: rgba(255,255,255,0.16); color: white; font-weight: 600; }
+    .logout-btn {
+      color: rgba(255,255,255,0.72); background: none;
+      border: 1px solid rgba(255,255,255,0.22);
+      font-size: 13px; padding: 6px 14px; border-radius: 6px;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
+    .page {
+      max-width: 700px; margin: 0 auto;
+      padding: 2rem 1.5rem;
+      animation: fadeUp 0.35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+    .page-header h1 { font-size: 26px; font-weight: 800; color: #1a202c; }
+    .clear-all {
+      font-size: 13px; color: #3182ce; cursor: pointer;
+      font-weight: 600; transition: color 0.15s;
+    }
+    .clear-all:hover { color: #2c5aa0; }
+
+    .notification-item {
+      background: white; border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      padding: 1.2rem; margin-bottom: 10px;
+      display: flex; gap: 12px;
+      transition: box-shadow 0.2s, background 0.2s;
+      position: relative;
+    }
+    .notification-item:hover {
+      box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+    }
+    .notification-item.unread {
+      background: #ebf4ff; border-color: #bee3f8;
+    }
+    .notification-item.unread::after {
+      content: ''; position: absolute; right: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #3182ce; animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .notif-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 20px;
+    }
+    .notif-icon.success { background: #f0fff4; color: #38a169; }
+    .notif-icon.warning { background: #fffaf0; color: #ed8936; }
+    .notif-icon.danger { background: #fff5f5; color: #e53e3e; }
+    .notif-icon.info { background: #ebf4ff; color: #3182ce; }
+
+    .notif-content {
+      flex: 1;
+    }
+    .notif-title {
+      font-size: 14px; font-weight: 700;
+      color: #1a202c; margin-bottom: 4px;
+    }
+    .notif-message {
+      font-size: 13px; color: #718096; line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .notif-time {
+      font-size: 12px; color: #a0aec0; font-weight: 500;
+    }
+
+    .notif-action {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .action-btn {
+      padding: 6px 12px; border-radius: 6px;
+      border: 1px solid #cbd5e0; background: white;
+      color: #3182ce; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .action-btn:hover { background: #ebf4ff; }
+
+    .notif-dismiss {
+      background: none; border: none; cursor: pointer;
+      color: #a0aec0; padding: 4px; font-size: 18px;
+      transition: color 0.15s;
+    }
+    .notif-dismiss:hover { color: #718096; }
+
+    .empty-state {
+      text-align: center; padding: 3rem 1.5rem;
+      background: white; border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .empty-icon {
+      font-size: 48px; margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    .empty-title {
+      font-size: 16px; font-weight: 700;
+      color: #1a202c; margin-bottom: 4px;
+    }
+    .empty-text {
+      font-size: 13px; color: #718096;
+    }
+
+    .notification-tabs {
+      display: flex; gap: 12px; margin-bottom: 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .tab {
+      padding: 12px 0; border-bottom: 2px solid transparent;
+      color: #718096; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .tab:hover { color: #3182ce; }
+    .tab.active {
+      color: #3182ce; border-bottom-color: #3182ce;
+    }
+
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .confirm-box {
+      background: white; border-radius: 14px;
+      padding: 2rem; max-width: 360px; width: 90%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      text-align: center;
+    }
+    .confirm-box h3 { font-size: 17px; font-weight: 700; color: #1a202c; margin-bottom: 8px; }
+    .confirm-box p { font-size: 13px; color: #718096; margin-bottom: 1.5rem; }
+    .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-cancel {
+      padding: 9px 20px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+      background: white; color: #4a5568; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-confirm-red {
+      padding: 9px 20px; border-radius: 8px; border: none;
+      background: #c53030; color: white; font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="/dashboard">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5L12 1z" fill="white"/>
+      </svg>
+    </div>
+    <span class="nav-title">SecureReg</span>
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="/dashboard">Dashboard</a>
+    <a class="nav-link" href="/activity">Activity</a>
+    <a class="nav-link" href="/users">Users</a>
+    <a class="nav-link active" href="/notifications">Notifications</a>
+    <a class="nav-link" href="/settings">Settings</a>
+    <button class="logout-btn" type="button" onclick="openLogout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Notifications</h1>
+    <span class="clear-all" onclick="clearAllNotifications()">Clear All</span>
+  </div>
+
+  <div class="notification-tabs">
+    <div class="tab active" onclick="filterNotifications('all')">All</div>
+    <div class="tab" onclick="filterNotifications('unread')">Unread (3)</div>
+    <div class="tab" onclick="filterNotifications('security')">Security</div>
+    <div class="tab" onclick="filterNotifications('system')">System</div>
+  </div>
+
+  <div id="notificationsContainer" style="min-height: 200px;">
+    <!-- Notifications will be loaded here dynamically -->
+    <p style="text-align: center; color: #999; padding: 40px;">Loading notifications...</p>
+  </div>
+</div>
+
+<div class="overlay" id="logoutOverlay">
+  <div class="confirm-box">
+    <h3>Sign out?</h3>
+    <p>Your session will be cleared and you'll return to the login page.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeLogout()">Cancel</button>
+      <button class="btn-confirm-red" onclick="confirmLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allNotifications = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Apply dark mode if enabled
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark-mode');
+  }
+  loadNotifications();
+});
+
+async function loadNotifications() {
+  try {
+    const res = await fetch('/api/notifications');
+    const data = await res.json();
+    allNotifications = data.notifications || [];
+    renderNotifications(allNotifications);
+  } catch (error) {
+    console.error('Error loading notifications:', error);
+    document.getElementById('notificationsContainer').innerHTML = '<p style="text-align: center; color: red;">Failed to load notifications</p>';
+  }
+}
+
+function renderNotifications(notifications) {
+  const container = document.getElementById('notificationsContainer');
+  
+  if (notifications.length === 0) {
+    container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No notifications</p>';
+    return;
+  }
+  
+  const html = notifications.map(notif => {
+    const iconMap = {
+      'success': '✓',
+      'warning': '🔔',
+      'info': 'ℹ️',
+      'danger': '⚠️'
+    };
+    
+    const icon = iconMap[notif.type] || '●';
+    const unreadClass = notif.unread ? 'unread' : '';
+    
+    return `
+      <div class="notification-item ${unreadClass}">
+        <div class="notif-icon ${notif.type}">${icon}</div>
+        <div class="notif-content">
+          <div class="notif-title">${notif.title}</div>
+          <div class="notif-message">${notif.message}</div>
+          <div class="notif-time">${notif.time}</div>
+        </div>
+        <div class="notif-action">
+          <button class="notif-dismiss" onclick="dismissNotification(event)">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  container.innerHTML = html;
+}
+
+function dismissNotification(e) {
+  e.stopPropagation();
+  const item = e.target.closest('.notification-item');
+  item.style.animation = 'fadeDown 0.3s ease';
+  setTimeout(() => item.remove(), 300);
+}
+
+function clearAllNotifications() {
+  if (confirm('Are you sure you want to clear all notifications?')) {
+    fetch('/api/notifications/clear', { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        allNotifications = [];
+        document.getElementById('notificationsContainer').innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No notifications</p>';
+      })
+      .catch(error => console.error('Error clearing notifications:', error));
+  }
+}
+
+function filterNotifications(type) {
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if (type === 'all') {
+    renderNotifications(allNotifications);
+  } else if (type === 'unread') {
+    const unread = allNotifications.filter(n => n.unread);
+    renderNotifications(unread);
+  } else if (type === 'security') {
+    const security = allNotifications.filter(n => n.type === 'warning' || n.type === 'danger');
+    renderNotifications(security);
+  } else if (type === 'system') {
+    const system = allNotifications.filter(n => n.type === 'info' || n.type === 'success');
+    renderNotifications(system);
+  }
+}
+
+function openLogout() {
+  document.getElementById("logoutOverlay").style.display = "flex";
+}
+
+function closeLogout() {
+  document.getElementById("logoutOverlay").style.display = "none";
+}
+
+function confirmLogout() {
+  window.location.href = '/logout';
+}
+</script>
+
+<style>
+  @keyframes fadeDown {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+  }
+</style>
+</body>
+</html>
