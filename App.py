@@ -130,6 +130,56 @@ def login():
         return redirect(url_for("dashboard"))
     return render_template("Login.html")
 
+@app.route("/register")
+def register():
+    if "username" in session:
+        return redirect(url_for("dashboard"))
+    return render_template("Index.html", captcha_question=generate_captcha())
+
+@app.route("/register", methods=["POST"])
+def register_post():
+    data     = request.get_json()
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+    captcha_input = data.get("captcha", "")
+
+    if not username or len(username) < 3:
+        return jsonify({"success": False, "error": "Username too short"}), 400
+
+    if not check_password_strength(password)["is_strong"]:
+        return jsonify({"success": False, "error": "Weak password"}), 400
+
+    try:
+        if int(captcha_input) != session.get("captcha_answer"):
+            return jsonify({"success": False, "error": "Wrong CAPTCHA"}), 400
+    except:
+        return jsonify({"success": False, "error": "Invalid CAPTCHA"}), 400
+
+    try:
+        conn   = get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT username FROM users WHERE username = :1", (username,))
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "error": "Username already exists"}), 409
+
+        hashed = hash_password(password)
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, created_at, role) VALUES (:1, :2, :3, :4)",
+            (username, hashed, datetime.now().strftime("%d %B %Y, %H:%M"), 'staff')
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({"success": True, "redirect": url_for("login")})
+    except ConnectionError:
+        return db_error_response()
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route("/login", methods=["POST"])
 def login_post():
     data     = request.get_json()
